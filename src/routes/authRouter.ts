@@ -5,7 +5,7 @@ import {
   logout,
   refreshToken,
 } from "../controllers/authController.js";
-import { withAsync } from "../lib/withAsync.js";
+import { withAsync } from "../libs/withAsync.js";
 
 const authRouter = express.Router();
 

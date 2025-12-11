@@ -1,18 +1,20 @@
+import type { RequestHandler } from "express";
+import type { FileFilterCallback } from "multer";
 import multer from "multer";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import { PUBLIC_PATH, STATIC_PATH } from "../lib/constants.js";
-import BadRequestError from "../lib/errors/BadRequestError.js";
+import { PUBLIC_PATH, STATIC_PATH } from "../libs/constants.js";
+import BadRequestError from "../libs/errors/BadRequestError.js";
 
 const ALLOWED_MIME_TYPES = ["image/png", "image/jpeg", "image/jpg"];
 const FILE_SIZE_LIMIT = 5 * 1024 * 1024;
 
 export const upload = multer({
   storage: multer.diskStorage({
-    destination(req, file, cb) {
+    destination(_req, _file, cb) {
       cb(null, PUBLIC_PATH);
     },
-    filename(req, file, cb) {
+    filename(_req, file, cb) {
       const ext = path.extname(file.originalname);
       const filename = `${uuidv4()}${ext}`;
       cb(null, filename);
@@ -23,7 +25,7 @@ export const upload = multer({
     fileSize: FILE_SIZE_LIMIT,
   },
 
-  fileFilter: function (req, file, cb) {
+  fileFilter(req, file, cb: FileFilterCallback) {
     if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       const err = new BadRequestError("Only png, jpeg, and jpg are allowed");
       return cb(err);
@@ -33,9 +35,13 @@ export const upload = multer({
   },
 });
 
-export async function uploadImage(req, res) {
+export const uploadImage: RequestHandler = async (req, res) => {
+  if (!req.file) {
+    throw new BadRequestError("No file uploaded");
+  }
+
   const host = req.get("host");
-  const filePath = path.join(host, STATIC_PATH, req.file.filename);
+  const filePath = path.join(host ?? "", STATIC_PATH, req.file.filename);
   const url = `http://${filePath}`;
   return res.send({ url });
-}
+};

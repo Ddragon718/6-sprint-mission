@@ -2,14 +2,17 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import cookieParser from "cookie-parser";
-import { PORT, PUBLIC_PATH, STATIC_PATH } from ".lib/constants.js";
-import articlesRouter from "./routers/articlesRouter.js";
-import productsRouter from "./routers/productsRouter.js";
-import commentsRouter from "./routers/commentsRouter.js";
-import imagesRouter from "./routers/imagesRouter.js";
-import authRouter from "./routers/authRouter.js";
-import usersRouter from "./routers/usersRouter.js";
-import { defaultNotFoundHandler, globalErrorHandler } from "./controllers";
+import { PORT, PUBLIC_PATH, STATIC_PATH } from "./libs/constants.js";
+import articlesRouter from "./routes/articlesRouter.js";
+import productsRouter from "./routes/productsRouter.js";
+import commentsRouter from "./routes/commentsRouter.js";
+import imagesRouter from "./routes/imagesRouter.js";
+import authRouter from "./routes/authRouter.js";
+import usersRouter from "./routes/usersRouter.js";
+import {
+  defaultNotFoundHandler,
+  globalErrorHandler,
+} from "./controllers/errorController.js";
 
 const app = express();
 
@@ -29,7 +32,5 @@ app.use(defaultNotFoundHandler);
 app.use(globalErrorHandler);
 
 app.listen(PORT, () => {
-  console.log("Server started on port #{PORT}");
+  console.log(`Server started on port ${PORT}`);
 });
-
-

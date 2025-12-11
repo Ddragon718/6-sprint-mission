@@ -1,18 +1,26 @@
+import type { Request, Response } from "express";
+import type { Prisma } from "@prisma/client";
 import { create } from "superstruct";
-import { prismaClient } from "../lib/prismaClient.js";
+import { prismaClient } from "../libs/prismaClient.js";
 import { UpdateCommentBodyStruct } from "../structs/commentsStruct.js";
-import NotFoundError from "../lib/errors/NotFoundError.js";
+import NotFoundError from "../libs/errors/NotFoundError.js";
 import { IdParamsStruct } from "../structs/commonStructs.js";
-import UnauthorizedError from "../lib/errors/UnauthorizedError.js";
-import ForbiddenError from "../lib/errors/ForbiddenError.js";
+import UnauthorizedError from "../libs/errors/UnauthorizedError.js";
+import ForbiddenError from "../libs/errors/ForbiddenError.js";
 
-export async function updateComment(req, res) {
+export async function updateComment(req: Request, res: Response) {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
 
   const { id } = create(req.params, IdParamsStruct);
-  const { content } = create(req.body, UpdateCommentBodyStruct);
+  const { content } = create(req.body, UpdateCommentBodyStruct) as {
+    content?: string;
+  };
+  const updateData: Prisma.CommentUpdateInput = {};
+  if (content !== undefined) {
+    updateData.content = content;
+  }
 
   const existingComment = await prismaClient.comment.findUnique({
     where: { id },
@@ -27,13 +35,13 @@ export async function updateComment(req, res) {
 
   const updatedComment = await prismaClient.comment.update({
     where: { id },
-    data: { content },
+    data: updateData,
   });
 
   return res.send(updatedComment);
 }
 
-export async function deleteComment(req, res) {
+export async function deleteComment(req: Request, res: Response) {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }

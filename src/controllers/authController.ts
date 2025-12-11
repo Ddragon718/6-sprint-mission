@@ -1,16 +1,17 @@
+import type { RequestHandler, Response } from "express";
 import { create } from "superstruct";
 import bcrypt from "bcrypt";
-import { prismaClient } from "../lib/prismaClient.js";
-import { generateTokens, verifyRefreshToken } from "../lib/token.js";
+import { prismaClient } from "../libs/prismaClient.js";
+import { generateTokens, verifyRefreshToken } from "../libs/token.js";
 import {
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
   NODE_ENV,
-} from "../lib/constants.js";
+} from "../libs/constants.js";
 import { LoginBodyStruct, RegisterBodyStruct } from "../structs/authStructs.js";
-import BadRequestError from "../lib/errors/BadRequestError.js";
+import BadRequestError from "../libs/errors/BadRequestError.js";
 
-export async function register(req, res) {
+export const register: RequestHandler = async (req, res) => {
   const { email, nickname, password } = create(req.body, RegisterBodyStruct);
 
   const salt = await bcrypt.genSalt(10);
@@ -27,9 +28,9 @@ export async function register(req, res) {
 
   const { password: _, ...userWithoutPassword } = user;
   res.status(201).json(userWithoutPassword);
-}
+};
 
-export async function login(req, res) {
+export const login: RequestHandler = async (req, res) => {
   const { email, password } = create(req.body, LoginBodyStruct);
 
   const user = await prismaClient.user.findUnique({ where: { email } });
@@ -45,15 +46,15 @@ export async function login(req, res) {
   const { accessToken, refreshToken } = generateTokens(user.id);
   setTokenCookies(res, accessToken, refreshToken);
   res.status(200).send();
-}
+};
 
-export async function logout(req, res) {
+export const logout: RequestHandler = async (_req, res) => {
   clearTokenCookies(res);
   res.status(200).send();
-}
+};
 
-export async function refreshToken(req, res) {
-  const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE_NAME];
+export const refreshToken: RequestHandler = async (req, res) => {
+  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
   if (!refreshToken) {
     throw new BadRequestError("Invalid refresh token");
   }
@@ -68,9 +69,9 @@ export async function refreshToken(req, res) {
   const { accessToken, refreshToken: newRefreshToken } = generateTokens(userId);
   setTokenCookies(res, accessToken, newRefreshToken);
   res.status(200).send();
-}
+};
 
-function setTokenCookies(res, accessToken, refreshToken) {
+function setTokenCookies(res: Response, accessToken: string, refreshToken: string) {
   res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, {
     httpOnly: true,
     secure: NODE_ENV === "production",
@@ -84,7 +85,7 @@ function setTokenCookies(res, accessToken, refreshToken) {
   });
 }
 
-function clearTokenCookies(res) {
+function clearTokenCookies(res: Response) {
   res.clearCookie(ACCESS_TOKEN_COOKIE_NAME);
   res.clearCookie(REFRESH_TOKEN_COOKIE_NAME);
 }

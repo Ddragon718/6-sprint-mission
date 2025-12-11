@@ -1,10 +1,15 @@
-import { prismaClient } from "../lib/prismaClient.js";
-import { verifyAccessToken } from "../lib/token.js";
-import { ACCESS_TOKEN_COOKIE_NAME } from "../lib/constants.js";
+import type { RequestHandler } from "express";
+import { prismaClient } from "../libs/prismaClient.js";
+import { verifyAccessToken } from "../libs/token.js";
+import { ACCESS_TOKEN_COOKIE_NAME } from "../libs/constants.js";
 
-function authenticate(options = { optional: false }) {
+type AuthenticateOptions = {
+  optional?: boolean;
+};
+
+function authenticate(options: AuthenticateOptions = { optional: false }): RequestHandler {
   return async (req, res, next) => {
-    const accessToken = req.cookies[ACCESS_TOKEN_COOKIE_NAME];
+    const accessToken = req.cookies?.[ACCESS_TOKEN_COOKIE_NAME];
     if (!accessToken) {
       if (options.optional) {
         return next();

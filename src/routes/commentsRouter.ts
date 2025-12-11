@@ -1,9 +1,9 @@
 import express from "express";
-import { withAsync } from "../lib/withAsync.js";
+import { withAsync } from "../libs/withAsync.js";
 import {
   updateComment,
   deleteComment,
-} from "../controllers/commentsController.js";
+} from "../controllers/commentController.js";
 import authenticate from "../middlewares/authenticate.js";
 
 const commentsRouter = express.Router();

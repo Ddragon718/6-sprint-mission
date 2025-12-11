@@ -1,16 +1,18 @@
+import type { RequestHandler } from "express";
+import type { Prisma } from "@prisma/client";
 import { create } from "superstruct";
 import bcrypt from "bcrypt";
-import { prismaClient } from "../lib/prismaClient.js";
+import { prismaClient } from "../libs/prismaClient.js";
 import {
   UpdateMeBodyStruct,
   UpdatePasswordBodyStruct,
   GetMyProductListParamsStruct,
   GetMyFavoriteListParamsStruct,
 } from "../structs/usersStructs.js";
-import NotFoundError from "../lib/errors/NotFoundError.js";
-import UnauthorizedError from "../lib/errors/UnauthorizedError.js";
+import NotFoundError from "../libs/errors/NotFoundError.js";
+import UnauthorizedError from "../libs/errors/UnauthorizedError.js";
 
-export async function getMe(req, res) {
+export const getMe: RequestHandler = async (req, res) => {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
@@ -24,25 +26,32 @@ export async function getMe(req, res) {
 
   const { password: _, ...userWithoutPassword } = user;
   return res.send(userWithoutPassword);
-}
+};
 
-export async function updateMe(req, res) {
+export const updateMe: RequestHandler = async (req, res) => {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
 
-  const data = create(req.body, UpdateMeBodyStruct);
+  const data = create(
+    req.body,
+    UpdateMeBodyStruct
+  ) as Partial<Pick<Prisma.UserUpdateInput, "email" | "nickname" | "image">>;
+  const updateData: Prisma.UserUpdateInput = {};
+  if (data.email !== undefined) updateData.email = data.email;
+  if (data.nickname !== undefined) updateData.nickname = data.nickname;
+  if (data.image !== undefined) updateData.image = data.image;
 
   const updatedUser = await prismaClient.user.update({
     where: { id: req.user.id },
-    data,
+    data: updateData,
   });
 
   const { password: _, ...userWithoutPassword } = updatedUser;
   return res.status(200).send(userWithoutPassword);
-}
+};
 
-export async function updateMyPassword(req, res) {
+export const updateMyPassword: RequestHandler = async (req, res) => {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
@@ -70,9 +79,9 @@ export async function updateMyPassword(req, res) {
   });
 
   return res.status(200).send();
-}
+};
 
-export async function getMyProductList(req, res) {
+export const getMyProductList: RequestHandler = async (req, res) => {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
@@ -114,7 +123,7 @@ export async function getMyProductList(req, res) {
     favorites: undefined,
     favoriteCount: product.favorites.length,
     isFavorited: product.favorites.some(
-      (favorite) => favorite.userId === req.user.id
+      (favorite) => favorite.userId === req.user!.id
     ),
   }));
 
@@ -122,9 +131,9 @@ export async function getMyProductList(req, res) {
     list: productsWithFavorites,
     totalCount,
   });
-}
+};
 
-export async function getMyFavoriteList(req, res) {
+export const getMyFavoriteList: RequestHandler = async (req, res) => {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
@@ -180,4 +189,4 @@ export async function getMyFavoriteList(req, res) {
     list: productsWithFavorites,
     totalCount,
   });
-}
+};

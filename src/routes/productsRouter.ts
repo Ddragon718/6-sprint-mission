@@ -1,5 +1,5 @@
 import express from "express";
-import { withAsync } from "../lib/withAsync.js";
+import { withAsync } from "../libs/withAsync.js";
 import {
   createProduct,
   getProduct,
@@ -10,7 +10,7 @@ import {
   getCommentList,
   createFavorite,
   deleteFavorite,
-} from "../controllers/productsController.js";
+} from "../controllers/productController.js";
 import authenticate from "../middlewares/authenticate.js";
 
 const productsRouter = express.Router();

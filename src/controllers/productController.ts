@@ -1,21 +1,23 @@
+import type { Request, Response } from "express";
+import type { Prisma } from "@prisma/client";
 import { create } from "superstruct";
-import { prismaClient } from "../lib/prismaClient.js";
-import NotFoundError from "../lib/errors/NotFoundError.js";
+import { prismaClient } from "../libs/prismaClient.js";
+import NotFoundError from "../libs/errors/NotFoundError.js";
 import { IdParamsStruct } from "../structs/commonStructs.js";
 import {
   CreateProductBodyStruct,
   GetProductListParamsStruct,
   UpdateProductBodyStruct,
-} from "../structs/productsStruct.js";
+} from "../structs/productsStructs.js";
 import {
   CreateCommentBodyStruct,
   GetCommentListParamsStruct,
 } from "../structs/commentsStruct.js";
-import UnauthorizedError from "../lib/errors/UnauthorizedError.js";
-import ForbiddenError from "../lib/errors/ForbiddenError.js";
-import BadRequestError from "../lib/errors/BadRequestError.js";
+import UnauthorizedError from "../libs/errors/UnauthorizedError.js";
+import ForbiddenError from "../libs/errors/ForbiddenError.js";
+import BadRequestError from "../libs/errors/BadRequestError.js";
 
-export async function createProduct(req, res) {
+export async function createProduct(req: Request, res: Response) {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
@@ -32,13 +34,15 @@ export async function createProduct(req, res) {
   res.status(201).send(createdProduct);
 }
 
-export async function getProduct(req, res) {
+export async function getProduct(req: Request, res: Response) {
   const { id } = create(req.params, IdParamsStruct);
 
-  const product = await prismaClient.product.findUnique({
-    where: { id },
-    include: { favorites: true },
-  });
+  const product = await prismaClient.product.findUnique(
+    {
+      where: { id },
+      include: { favorites: true },
+    } satisfies Prisma.ProductFindUniqueArgs
+  );
   if (!product) {
     throw new NotFoundError("product", id);
   }
@@ -48,23 +52,38 @@ export async function getProduct(req, res) {
     favorites: undefined,
     favoriteCount: product.favorites.length,
     isFavorited: req.user
-      ? product.favorites.some((favorite) => favorite.userId === req.user.id)
+      ? product.favorites.some((favorite) => favorite.userId === req.user!.id)
       : undefined,
   };
 
   return res.send(productWithFavorites);
 }
 
-export async function updateProduct(req, res) {
+export async function updateProduct(req: Request, res: Response) {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
 
   const { id } = create(req.params, IdParamsStruct);
-  const { name, description, price, tags, images } = create(
+  const updatePayload = create(
     req.body,
     UpdateProductBodyStruct
-  );
+  ) as Partial<
+    Pick<
+      Prisma.ProductUpdateInput,
+      "name" | "description" | "price" | "tags" | "images"
+    >
+  >;
+  const updateData: Prisma.ProductUpdateInput = {};
+  if (updatePayload.name !== undefined) updateData.name = updatePayload.name;
+  if (updatePayload.description !== undefined) {
+    updateData.description = updatePayload.description;
+  }
+  if (updatePayload.price !== undefined) updateData.price = updatePayload.price;
+  if (updatePayload.tags !== undefined) updateData.tags = updatePayload.tags;
+  if (updatePayload.images !== undefined) {
+    updateData.images = updatePayload.images;
+  }
 
   const existingProduct = await prismaClient.product.findUnique({
     where: { id },
@@ -79,13 +98,13 @@ export async function updateProduct(req, res) {
 
   const updatedProduct = await prismaClient.product.update({
     where: { id },
-    data: { name, description, price, tags, images },
+    data: updateData,
   });
 
   return res.send(updatedProduct);
 }
 
-export async function deleteProduct(req, res) {
+export async function deleteProduct(req: Request, res: Response) {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
@@ -107,38 +126,40 @@ export async function deleteProduct(req, res) {
   return res.status(204).send();
 }
 
-export async function getProductList(req, res) {
+export async function getProductList(req: Request, res: Response) {
   const { page, pageSize, orderBy, keyword } = create(
     req.query,
     GetProductListParamsStruct
   );
 
-  const where = keyword
+  const where: Prisma.ProductWhereInput = keyword
     ? {
         OR: [
           { name: { contains: keyword } },
           { description: { contains: keyword } },
         ],
       }
-    : undefined;
+    : {};
 
   const totalCount = await prismaClient.product.count({ where });
-  const products = await prismaClient.product.findMany({
-    skip: (page - 1) * pageSize,
-    take: pageSize,
-    orderBy: orderBy === "recent" ? { id: "desc" } : { id: "asc" },
-    where,
-    include: {
-      favorites: true,
-    },
-  });
+  const products = await prismaClient.product.findMany(
+    {
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: orderBy === "recent" ? { id: "desc" } : { id: "asc" },
+      where,
+      include: {
+        favorites: true,
+      },
+    } satisfies Prisma.ProductFindManyArgs
+  );
 
   const productsWithFavorites = products.map((product) => ({
     ...product,
     favorites: undefined,
     favoriteCount: product.favorites.length,
     isFavorited: req.user
-      ? product.favorites.some((favorite) => favorite.userId === req.user.id)
+      ? product.favorites.some((favorite) => favorite.userId === req.user!.id)
       : undefined,
   }));
 
@@ -148,7 +169,7 @@ export async function getProductList(req, res) {
   });
 }
 
-export async function createComment(req, res) {
+export async function createComment(req: Request, res: Response) {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
@@ -170,7 +191,7 @@ export async function createComment(req, res) {
   return res.status(201).send(createdComment);
 }
 
-export async function getCommentList(req, res) {
+export async function getCommentList(req: Request, res: Response) {
   const { id: productId } = create(req.params, IdParamsStruct);
   const { cursor, limit } = create(req.query, GetCommentListParamsStruct);
 
@@ -181,11 +202,17 @@ export async function getCommentList(req, res) {
     throw new NotFoundError("product", productId);
   }
 
-  const commentsWithCursorComment = await prismaClient.comment.findMany({
-    cursor: cursor ? { id: cursor } : undefined,
+  const commentsQuery: Prisma.CommentFindManyArgs = {
     take: limit + 1,
     where: { productId },
-  });
+  };
+  if (cursor) {
+    commentsQuery.cursor = { id: cursor };
+  }
+
+  const commentsWithCursorComment = await prismaClient.comment.findMany(
+    commentsQuery
+  );
   const comments = commentsWithCursorComment.slice(0, limit);
   const cursorComment = commentsWithCursorComment[comments.length - 1];
   const nextCursor = cursorComment ? cursorComment.id : null;
@@ -196,7 +223,7 @@ export async function getCommentList(req, res) {
   });
 }
 
-export async function createFavorite(req, res) {
+export async function createFavorite(req: Request, res: Response) {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
@@ -223,7 +250,7 @@ export async function createFavorite(req, res) {
   return res.status(201).send();
 }
 
-export async function deleteFavorite(req, res) {
+export async function deleteFavorite(req: Request, res: Response) {
   if (!req.user) {
     throw new UnauthorizedError("Unauthorized");
   }
