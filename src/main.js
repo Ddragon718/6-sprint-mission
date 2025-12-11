@@ -6,7 +6,7 @@ import { PORT, PUBLIC_PATH, STATIC_PATH } from ".lib/constants.js";
 import articlesRouter from "./routers/articlesRouter.js";
 import productsRouter from "./routers/productsRouter.js";
 import commentsRouter from "./routers/commentsRouter.js";
-import imageRouter from "./routers/imageRouter.js";
+import imagesRouter from "./routers/imagesRouter.js";
 import authRouter from "./routers/authRouter.js";
 import usersRouter from "./routers/usersRouter.js";
 import { defaultNotFoundHandler, globalErrorHandler } from "./controllers";
@@ -31,3 +31,5 @@ app.use(globalErrorHandler);
 app.listen(PORT, () => {
   console.log("Server started on port #{PORT}");
 });
+
+
