@@ -3,10 +3,12 @@ import type { Prisma } from "@prisma/client";
 import { create } from "superstruct";
 import { prismaClient } from "../libs/prismaClient.js";
 import { UpdateCommentBodyStruct } from "../structs/commentsStruct.js";
-import NotFoundError from "../libs/errors/NotFoundError.js";
+import {
+  NotFoundError,
+  UnauthorizedError,
+  ForbiddenError,
+} from "../libs/errors.js";
 import { IdParamsStruct } from "../structs/commonStructs.js";
-import UnauthorizedError from "../libs/errors/UnauthorizedError.js";
-import ForbiddenError from "../libs/errors/ForbiddenError.js";
 
 export async function updateComment(req: Request, res: Response) {
   if (!req.user) {

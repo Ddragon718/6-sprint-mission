@@ -2,7 +2,12 @@ import type { Request, Response } from "express";
 import type { Prisma } from "@prisma/client";
 import { create } from "superstruct";
 import { prismaClient } from "../libs/prismaClient.js";
-import NotFoundError from "../libs/errors/NotFoundError.js";
+import {
+  NotFoundError,
+  UnauthorizedError,
+  ForbiddenError,
+  BadRequestError,
+} from "../libs/errors.js";
 import { IdParamsStruct } from "../structs/commonStructs.js";
 import {
   CreateProductBodyStruct,
@@ -13,9 +18,6 @@ import {
   CreateCommentBodyStruct,
   GetCommentListParamsStruct,
 } from "../structs/commentsStruct.js";
-import UnauthorizedError from "../libs/errors/UnauthorizedError.js";
-import ForbiddenError from "../libs/errors/ForbiddenError.js";
-import BadRequestError from "../libs/errors/BadRequestError.js";
 
 export async function createProduct(req: Request, res: Response) {
   if (!req.user) {

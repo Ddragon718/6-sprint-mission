@@ -9,8 +9,7 @@ import {
   GetMyProductListParamsStruct,
   GetMyFavoriteListParamsStruct,
 } from "../structs/usersStructs.js";
-import NotFoundError from "../libs/errors/NotFoundError.js";
-import UnauthorizedError from "../libs/errors/UnauthorizedError.js";
+import { NotFoundError, UnauthorizedError } from "../libs/errors.js";
 
 export const getMe: RequestHandler = async (req, res) => {
   if (!req.user) {

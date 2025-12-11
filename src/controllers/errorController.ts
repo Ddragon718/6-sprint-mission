@@ -1,9 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { StructError } from "superstruct";
-import BadRequestError from "../libs/errors/BadRequestError.js";
-import NotFoundError from "../libs/errors/NotFoundError.js";
-import UnauthorizedError from "../libs/errors/UnauthorizedError.js";
-import ForbiddenError from "../libs/errors/ForbiddenError.js";
+import {
+  BadRequestError,
+  NotFoundError,
+  UnauthorizedError,
+  ForbiddenError,
+} from "../libs/errors.js";
 
 type PrismaLikeError = {
   code?: string;
@@ -15,6 +17,16 @@ export function defaultNotFoundHandler(
   _next: NextFunction
 ) {
   return res.status(404).send({ message: "Not found" });
+}
+
+function isJsonSyntaxError(
+  err: unknown
+): err is SyntaxError & { status?: number; body?: unknown } {
+  return (
+    err instanceof SyntaxError &&
+    typeof (err as { status?: unknown }).status === "number" &&
+    "body" in err
+  );
 }
 
 export function globalErrorHandler(
@@ -29,7 +41,7 @@ export function globalErrorHandler(
   }
 
   /** From express.json middleware */
-  if (err instanceof SyntaxError && (err as any).status === 400 && "body" in err) {
+  if (isJsonSyntaxError(err) && err.status === 400) {
     return res.status(400).send({ message: "Invalid JSON" });
   }
 

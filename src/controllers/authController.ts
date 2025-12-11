@@ -9,7 +9,7 @@ import {
   NODE_ENV,
 } from "../libs/constants.js";
 import { LoginBodyStruct, RegisterBodyStruct } from "../structs/authStructs.js";
-import BadRequestError from "../libs/errors/BadRequestError.js";
+import { BadRequestError } from "../libs/errors.js";
 
 export const register: RequestHandler = async (req, res) => {
   const { email, nickname, password } = create(req.body, RegisterBodyStruct);
