@@ -156,3 +156,14 @@ dist
 ### 개인 작업 디렉토리 ###
 # temp 폴더는 개인 테스트용이므로 Git에 올리지 않음
 temp/
+
+# macOS 생성 파일
+.DS_Store
+**/.DS_Store
+
+# 예시/로컬 환경 파일
+.env
+.env.example
+
+# 로컬 포맷 설정 파일
+.prettiterr
