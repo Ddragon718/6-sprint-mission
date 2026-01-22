@@ -67,6 +67,7 @@ model User {
     comments  Comment[]
     favorites Favorite[]
     likes     Like[]
+    notifications Notification[]
 }
 
 model Favorite {
@@ -87,4 +88,19 @@ model Like {
     userId    Int
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+}
+
+enum NotificationType {
+    PRICE_CHANGED
+    ARTICLE_COMMENT
+}
+
+model Notification {
+    id        Int              @id @default(autoincrement())
+    user      User             @relation(fields: [userId], references: [id])
+    userId    Int
+    type      NotificationType
+    payload   Json
+    isRead    Boolean          @default(false)
+    createdAt DateTime         @default(now())
 }
