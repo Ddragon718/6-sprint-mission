@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { Prisma } from "@prisma/client";
+import { NotificationType } from "@prisma/client";
 import { create } from "superstruct";
 import { prismaClient } from "../libs/prismaClient.js";
 import {
@@ -8,6 +9,7 @@ import {
   ForbiddenError,
   BadRequestError,
 } from "../libs/errors.js";
+import { createNotification } from "../libs/notificationService.js";
 import { IdParamsStruct } from "../structs/commonStructs.js";
 import {
   CreateProductBodyStruct,
@@ -89,6 +91,7 @@ export async function updateProduct(req: Request, res: Response) {
 
   const existingProduct = await prismaClient.product.findUnique({
     where: { id },
+    include: { favorites: true },
   });
   if (!existingProduct) {
     throw new NotFoundError("product", id);
@@ -102,6 +105,29 @@ export async function updateProduct(req: Request, res: Response) {
     where: { id },
     data: updateData,
   });
+
+  if (
+    updatePayload.price !== undefined &&
+    updatePayload.price !== existingProduct.price
+  ) {
+    const favoriteUserIds = Array.from(
+      new Set(existingProduct.favorites.map((favorite) => favorite.userId))
+    ).filter((userId) => userId !== req.user!.id);
+
+    await Promise.all(
+      favoriteUserIds.map((userId) =>
+        createNotification({
+          userId,
+          type: NotificationType.PRICE_CHANGED,
+          payload: {
+            productId: existingProduct.id,
+            oldPrice: existingProduct.price,
+            newPrice: updatePayload.price!,
+          },
+        })
+      )
+    );
+  }
 
   return res.send(updatedProduct);
 }

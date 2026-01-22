@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { Prisma } from "@prisma/client";
+import { NotificationType } from "@prisma/client";
 import { create } from "superstruct";
 import { prismaClient } from "../libs/prismaClient.js";
 import {
@@ -8,6 +9,7 @@ import {
   ForbiddenError,
   BadRequestError,
 } from "../libs/errors.js";
+import { createNotification } from "../libs/notificationService.js";
 import { IdParamsStruct } from "../structs/commonStructs.js";
 import {
   CreateArticleBodyStruct,
@@ -178,6 +180,18 @@ export async function createComment(req: Request, res: Response) {
       userId: req.user.id,
     },
   });
+
+  if (existingArticle.userId !== req.user.id) {
+    await createNotification({
+      userId: existingArticle.userId,
+      type: NotificationType.ARTICLE_COMMENT,
+      payload: {
+        articleId: existingArticle.id,
+        commentId: createdComment.id,
+        commenterId: req.user.id,
+      },
+    });
+  }
 
   return res.status(201).send(createdComment);
 }
