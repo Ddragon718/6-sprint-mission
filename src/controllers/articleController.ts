@@ -9,7 +9,7 @@ import {
   ForbiddenError,
   BadRequestError,
 } from "../libs/errors.js";
-import { createNotification } from "../libs/notificationService.js";
+import { notificationApi } from "../libs/notificationService.js";
 import { IdParamsStruct } from "../structs/commonStructs.js";
 import {
   CreateArticleBodyStruct,
@@ -182,7 +182,7 @@ export async function createComment(req: Request, res: Response) {
   });
 
   if (existingArticle.userId !== req.user.id) {
-    await createNotification({
+    await notificationApi.createNotification({
       userId: existingArticle.userId,
       type: NotificationType.ARTICLE_COMMENT,
       payload: {

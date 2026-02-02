@@ -9,7 +9,7 @@ import {
   ForbiddenError,
   BadRequestError,
 } from "../libs/errors.js";
-import { createNotification } from "../libs/notificationService.js";
+import { notificationApi } from "../libs/notificationService.js";
 import { IdParamsStruct } from "../structs/commonStructs.js";
 import {
   CreateProductBodyStruct,
@@ -116,7 +116,7 @@ export async function updateProduct(req: Request, res: Response) {
 
     await Promise.all(
       favoriteUserIds.map((userId) =>
-        createNotification({
+        notificationApi.createNotification({
           userId,
           type: NotificationType.PRICE_CHANGED,
           payload: {

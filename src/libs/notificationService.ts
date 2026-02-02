@@ -30,3 +30,11 @@ export async function createNotification({
 
   return notification;
 }
+
+/**
+ * Mutable wrapper to make ESM-friendly spies/mocks in tests.
+ * Controllers should call notificationApi.createNotification.
+ */
+export const notificationApi = {
+  createNotification,
+};
