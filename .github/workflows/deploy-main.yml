@@ -1,0 +1,27 @@
+name: Deploy To AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            set -e
+            cd ${{ secrets.EC2_PROJECT_PATH }}
+            git fetch origin
+            git checkout main
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
