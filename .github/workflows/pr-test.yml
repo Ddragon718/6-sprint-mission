@@ -26,7 +26,7 @@ jobs:
       POSTGRES_USER: ci_user
       POSTGRES_PASSWORD: ci_password
       POSTGRES_DB: ci_test_db
-      POSTGRES_URL: postgresql://ci_user:ci_password@localhost:5432/ci_test_db
+      DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/ci_test_db
       JWT_ACCESS_TOKEN_SECRET: test_secret_key
       JWT_REFRESH_TOKEN_SECRET: test_secret_key
 
